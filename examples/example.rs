@@ -19,7 +19,7 @@ fn main() {
             );
 
             println!(
-                "\t{}{} [({}, {}) - ({}, {})] (current: {}x{}@{:.1}Hz, preferred: {}x{}@{:.1}Hz)",
+                "\t{}{} ({}) [({}, {}) - ({}, {})] (current: {}x{}@{:.1}Hz, preferred: {}x{}@{:.1}Hz)",
                 display_info
                     .name
                     .as_ref()
@@ -30,6 +30,7 @@ fn main() {
                 } else {
                     ""
                 },
+                display_info.connection,
                 display_info.rects.virtual_rect.left(),
                 display_info.rects.virtual_rect.top(),
                 display_info.rects.virtual_rect.right(),

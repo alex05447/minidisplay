@@ -73,11 +73,18 @@ impl Default for Rectangle {
 }
 
 bitflags! {
+    /// Flags which specify the sides of the rectangle to (attempt to) keep in place when clipping.
+    /// Otherwise the rectangle may be moved to avoid clipping.
     pub struct ClipRectFlags: u32 {
+        /// Move the rectangle as appropriate to avoid clipping it.
         const KeepNone = 0;
+        /// Do not move the left side of the rectangle.
         const KeepLeft = 1;
+        /// Do not move the right side of the rectangle.
         const KeepRight = 1 << 1;
+        /// Do not move the top side of the rectangle.
         const KeepTop = 1 << 2;
+        /// Do not move the bottom side of the rectangle.
         const KeepBottom = 1 << 3;
     }
 }
@@ -134,7 +141,7 @@ impl Rectangle {
     /// `clip_flags` control which sides of the rectangle to try to keep in place.
     /// Returns the clipped rectangle.
     pub fn clip(&self, clip_rect: &Rectangle, clip_flags: ClipRectFlags) -> Rectangle {
-        // Clip to bottom and right sides.
+        // Clip to bottom and right sides, finding top and left coordinates.
         let mut right = self.right();
         let mut bottom = self.bottom();
 
@@ -144,21 +151,23 @@ impl Rectangle {
         let furthest_bottom = clip_rect.bottom();
         bottom = at_most(bottom, furthest_bottom);
 
-        // Then clip to top and left.
-        let left = if clip_flags.contains(ClipRectFlags::KeepLeft) {
+        let mut left = if clip_flags.contains(ClipRectFlags::KeepLeft) {
             self.left()
         } else {
             right - self.width() as i32
         };
         debug_assert!(left <= self.left());
+        left = at_least(left, clip_rect.left());
 
-        let top = if clip_flags.contains(ClipRectFlags::KeepTop) {
+        let mut top = if clip_flags.contains(ClipRectFlags::KeepTop) {
             self.top()
         } else {
             bottom - self.height() as i32
         };
         debug_assert!(top <= self.top());
+        top = at_least(top, clip_rect.top());
 
+        // Then clip to top and left, finding the bottom and right coordinates.
         let right = if clip_flags.contains(ClipRectFlags::KeepRight) {
             right
         } else {
