@@ -146,9 +146,9 @@ impl Displays {
     /// NOTE - `display_index == 0` corresponds to the system's primary display, if any.
     ///
     /// [`adjacency info`]: struct.AdjacencyInfo.html
-    pub fn adjacency_info(&self, display_index: u32) -> Option<AdjacencyInfo> {
+    pub fn adjacency_info(&self, display_index: u32) -> Option<&AdjacencyInfo> {
         self.display_info_inner(display_index)
-            .map(|display_info| display_info.adjacency_info)
+            .map(|display_info| &display_info.adjacency_info)
     }
 
     fn display_info_inner(&self, display_index: u32) -> Option<&DisplayInfoInner> {
