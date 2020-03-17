@@ -73,10 +73,9 @@ impl Default for Rectangle {
 }
 
 bitflags! {
-    /// Flags which specify the sides of the rectangle to (attempt to) keep in place when clipping.
-    /// Otherwise the rectangle may be moved to avoid clipping.
+    /// Flags which specify the sides of the rectangle to (attempt to) keep in place when clipping / clamping.
     pub struct ClipRectFlags: u32 {
-        /// Move the rectangle as appropriate to avoid clipping it.
+        /// Move the rectangle as appropriate.
         const KeepNone = 0;
         /// Do not move the left side of the rectangle.
         const KeepLeft = 1;
@@ -190,14 +189,52 @@ impl Rectangle {
     }
 
     /// Clamps the rectangle's dimensions to the provided minimum.
+    /// `clip_flags` control which sides of the rectangle to keep in place.
     /// Returns the clamped rectangle.
-    pub fn clamp(&self, min_dimensions: Dimensions) -> Rectangle {
-        let mut rectangle = *self;
+    pub fn clamp(&self, min_dimensions: Dimensions, clip_flags: ClipRectFlags) -> Rectangle {
+        let left = self.left();
+        let top = self.top();
 
-        rectangle.dimensions.width = at_least(rectangle.dimensions.width, min_dimensions.width);
-        rectangle.dimensions.height = at_least(rectangle.dimensions.height, min_dimensions.height);
+        let width = at_least(self.width(), min_dimensions.width);
+        let height = at_least(self.height(), min_dimensions.height);
 
-        rectangle
+        let right = if clip_flags.contains(ClipRectFlags::KeepRight) {
+            self.right()
+        } else {
+            left + width as i32
+        };
+
+        let bottom = if clip_flags.contains(ClipRectFlags::KeepBottom) {
+            self.bottom()
+        } else {
+            top + height as i32
+        };
+
+        let left = if clip_flags.contains(ClipRectFlags::KeepLeft) {
+            self.left()
+        } else {
+            right - width as i32
+        };
+
+        let top = if clip_flags.contains(ClipRectFlags::KeepTop) {
+            self.top()
+        } else {
+            bottom - height as i32
+        };
+
+        debug_assert!(right >= (left + min_dimensions.width as i32));
+        debug_assert!(bottom >= (top + min_dimensions.height as i32));
+
+        let width = (right - left) as u32;
+        let height = (bottom - top) as u32;
+
+        Rectangle {
+            position: Position::new(left, top),
+            dimensions: Dimensions::new(
+                width,
+                height,
+            )
+        }
     }
 }
 
@@ -262,5 +299,42 @@ mod tests {
 
         assert!(!rect_2.contains(&rect_3));
         assert!(!rect_3.contains(&rect_2));
+    }
+
+    #[test]
+    fn clamp() {
+        let min_dimensions = Dimensions::new(3, 2);
+
+        // Resizing on the left.
+        let rect = Rectangle::new(Position::new(-1, -2), Dimensions::new(2, 3));
+        assert_eq!(rect.clamp(min_dimensions, ClipRectFlags::KeepRight), Rectangle::new(Position::new(-2, -2), Dimensions::new(3, 3)));
+
+        // Resizing on the right.
+        let rect = Rectangle::new(Position::new(-3, -2), Dimensions::new(2, 3));
+        assert_eq!(rect.clamp(min_dimensions, ClipRectFlags::KeepLeft), Rectangle::new(Position::new(-3, -2), Dimensions::new(3, 3)));
+
+        // Resizing on the top.
+        let rect = Rectangle::new(Position::new(-3, 0), Dimensions::new(4, 1));
+        assert_eq!(rect.clamp(min_dimensions, ClipRectFlags::KeepBottom), Rectangle::new(Position::new(-3, -1), Dimensions::new(4, 2)));
+
+        // Resizing on the bottom.
+        let rect = Rectangle::new(Position::new(-3, -2), Dimensions::new(4, 1));
+        assert_eq!(rect.clamp(min_dimensions, ClipRectFlags::KeepTop), Rectangle::new(Position::new(-3, -2), Dimensions::new(4, 2)));
+
+        // Resizing on the left and top.
+        let rect = Rectangle::new(Position::new(0, 0), Dimensions::new(1, 1));
+        assert_eq!(rect.clamp(min_dimensions, ClipRectFlags::KeepRight | ClipRectFlags::KeepBottom), Rectangle::new(Position::new(-2, -1), Dimensions::new(3, 2)));
+
+        // Resizing on the left and bottom.
+        let rect = Rectangle::new(Position::new(0, -2), Dimensions::new(1, 1));
+        assert_eq!(rect.clamp(min_dimensions, ClipRectFlags::KeepRight | ClipRectFlags::KeepTop), Rectangle::new(Position::new(-2, -2), Dimensions::new(3, 2)));
+
+        // Resizing on the right and bottom.
+        let rect = Rectangle::new(Position::new(-3, -2), Dimensions::new(1, 1));
+        assert_eq!(rect.clamp(min_dimensions, ClipRectFlags::KeepLeft | ClipRectFlags::KeepTop), Rectangle::new(Position::new(-3, -2), Dimensions::new(3, 2)));
+
+        // Resizing on the right and top.
+        let rect = Rectangle::new(Position::new(-3, 0), Dimensions::new(1, 1));
+        assert_eq!(rect.clamp(min_dimensions, ClipRectFlags::KeepLeft | ClipRectFlags::KeepBottom), Rectangle::new(Position::new(-3, -1), Dimensions::new(3, 2)));
     }
 }
