@@ -22,8 +22,7 @@ fn main() {
                 "\t{}{} ({}) [({}, {}) - ({}, {})] (current: {}x{}@{:.1}Hz, preferred: {}x{}@{:.1}Hz)",
                 display_info
                     .name
-                    .as_ref()
-                    .map(|name| name.as_str())
+                    .as_deref()
                     .unwrap_or(&"<unnamed>"),
                 if display_info.is_primary {
                     " (primary)"
