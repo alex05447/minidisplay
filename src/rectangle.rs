@@ -73,9 +73,9 @@ impl Default for Rectangle {
 }
 
 bitflags! {
-    /// Flags which specify the sides of the rectangle to (attempt to) keep in place when clipping / clamping.
+    /// Flags which specify the sides of the rectangle to (attempt to) keep in place when clipping / clamping it.
     pub struct ClipRectFlags: u32 {
-        /// Move the rectangle as appropriate.
+        /// Move the rectangle as appropriate to clip / clamp it.
         const KeepNone = 0;
         /// Do not move the left side of the rectangle.
         const KeepLeft = 1;
@@ -139,7 +139,16 @@ impl Rectangle {
     /// Tries to clip the rectangle to the provided bounds.
     /// `clip_flags` control which sides of the rectangle to try to keep in place.
     /// Returns the clipped rectangle.
+    ///
+    /// NOTE: `clip_flags` must not contain both of `KeepLeft` and `KeepRight`;
+    /// as well as both of `KeepTop` and `KeepBottom`. If this is the case, the method returns `self`.
     pub fn clip(&self, clip_rect: &Rectangle, clip_flags: ClipRectFlags) -> Rectangle {
+        // If both of any of opposite side flags are set, we just ignore the request and return self.
+        if (clip_flags.contains(ClipRectFlags::KeepLeft) && clip_flags.contains(ClipRectFlags::KeepRight)) ||
+            (clip_flags.contains(ClipRectFlags::KeepTop) && clip_flags.contains(ClipRectFlags::KeepBottom)) {
+            return *self;
+        }
+
         // Clip to bottom and right sides, finding top and left coordinates.
         let mut right = self.right();
         let mut bottom = self.bottom();
@@ -191,7 +200,16 @@ impl Rectangle {
     /// Clamps the rectangle's dimensions to the provided minimum.
     /// `clip_flags` control which sides of the rectangle to keep in place.
     /// Returns the clamped rectangle.
+    ///
+    /// NOTE: `clip_flags` must not contain both of `KeepLeft` and `KeepRight`;
+    /// as well as both of `KeepTop` and `KeepBottom`. If this is the case, the method returns `self`.
     pub fn clamp(&self, min_dimensions: Dimensions, clip_flags: ClipRectFlags) -> Rectangle {
+        // If both of any of opposite side flags are set, we just ignore the request and return self.
+        if (clip_flags.contains(ClipRectFlags::KeepLeft) && clip_flags.contains(ClipRectFlags::KeepRight)) ||
+            (clip_flags.contains(ClipRectFlags::KeepTop) && clip_flags.contains(ClipRectFlags::KeepBottom)) {
+            return *self;
+        }
+
         let left = self.left();
         let top = self.top();
 
@@ -302,8 +320,61 @@ mod tests {
     }
 
     #[test]
+    fn clip() {
+        let bounds = Rectangle::new(Position::new(-1, -2), Dimensions::new(4, 5));
+
+        // Resizing on the left, clipped.
+        let rect = Rectangle::new(Position::new(-2, -1), Dimensions::new(4, 2));
+        assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepRight), Rectangle::new(Position::new(-1, -1), Dimensions::new(3, 2)));
+        // Resizing on the left, clipped and moved.
+        let rect = Rectangle::new(Position::new(-2, -3), Dimensions::new(4, 2));
+        assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepRight), Rectangle::new(Position::new(-1, -2), Dimensions::new(3, 2)));
+
+        // Resizing on the right, clipped.
+        let rect = Rectangle::new(Position::new(1, -1), Dimensions::new(3, 2));
+        assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepLeft), Rectangle::new(Position::new(1, -1), Dimensions::new(2, 2)));
+        // Resizing on the right, clipped and moved.
+        let rect = Rectangle::new(Position::new(1, -3), Dimensions::new(3, 2));
+        assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepLeft), Rectangle::new(Position::new(1, -2), Dimensions::new(2, 2)));
+
+        // Resizing on the top, clipped.
+        let rect = Rectangle::new(Position::new(-1, -3), Dimensions::new(2, 3));
+        assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepBottom), Rectangle::new(Position::new(-1, -2), Dimensions::new(2, 2)));
+        // Resizing on the top, clipped and moved.
+        let rect = Rectangle::new(Position::new(-2, -3), Dimensions::new(2, 3));
+        assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepBottom), Rectangle::new(Position::new(-1, -2), Dimensions::new(2, 2)));
+
+        // Resizing on the bottom, clipped.
+        let rect = Rectangle::new(Position::new(0, 2), Dimensions::new(2, 3));
+        assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepTop), Rectangle::new(Position::new(0, 2), Dimensions::new(2, 1)));
+        // Resizing on the bottom, clipped and moved.
+        let rect = Rectangle::new(Position::new(2, 2), Dimensions::new(2, 3));
+        assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepTop), Rectangle::new(Position::new(1, 2), Dimensions::new(2, 1)));
+
+        // Resizing on the left and top.
+        let rect = Rectangle::new(Position::new(-2, -3), Dimensions::new(2, 2));
+        assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepRight | ClipRectFlags::KeepBottom), Rectangle::new(Position::new(-1, -2), Dimensions::new(1, 1)));
+
+        // Resizing on the left and bottom.
+        let rect = Rectangle::new(Position::new(-2, 1), Dimensions::new(2, 3));
+        assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepRight | ClipRectFlags::KeepTop), Rectangle::new(Position::new(-1, 1), Dimensions::new(1, 2)));
+
+        // Resizing on the right and top.
+        let rect = Rectangle::new(Position::new(2, -3), Dimensions::new(2, 3));
+        assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepLeft | ClipRectFlags::KeepBottom), Rectangle::new(Position::new(2, -2), Dimensions::new(1, 2)));
+    }
+
+    #[test]
     fn clamp() {
         let min_dimensions = Dimensions::new(3, 2);
+
+        // No-op.
+        let rect = Rectangle::new(Position::new(-1, -2), Dimensions::new(2, 3));
+        assert_eq!(rect.clamp(min_dimensions, ClipRectFlags::KeepLeft | ClipRectFlags::KeepRight), rect);
+
+        // No-op.
+        let rect = Rectangle::new(Position::new(-3, 0), Dimensions::new(4, 1));
+        assert_eq!(rect.clamp(min_dimensions, ClipRectFlags::KeepTop | ClipRectFlags::KeepBottom), rect);
 
         // Resizing on the left.
         let rect = Rectangle::new(Position::new(-1, -2), Dimensions::new(2, 3));
