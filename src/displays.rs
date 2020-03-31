@@ -1,4 +1,4 @@
-use crate::DisplayInfo;
+use crate::{DisplayInfo, Rectangle, Dimensions, Position};
 
 #[cfg(windows)]
 use crate::DisplayInfoPlatform;
@@ -63,6 +63,7 @@ pub(crate) struct DisplayInfoInner {
 /// Enumerates and holds the information about the system's displays.
 pub struct Displays {
     displays: Vec<DisplayInfoInner>,
+    virtual_desktop: Option<Rectangle>,
 }
 
 impl Default for Displays {
@@ -81,6 +82,7 @@ impl Displays {
     pub fn new() -> Self {
         Self {
             displays: Vec::new(),
+            virtual_desktop: None,
         }
     }
 
@@ -109,6 +111,34 @@ impl Displays {
         self.displays.clear();
         self.displays.append(&mut displays);
         self.displays.shrink_to_fit();
+
+        // Calculate the virtual desctop rectangle.
+        if !self.displays.is_empty() {
+            let mut virtual_desktop_left = 0;
+            let mut virtual_desktop_top = 0;
+            let mut virtual_desktop_right = 0;
+            let mut virtual_desktop_bottom = 0;
+
+            for display in self.displays.iter() {
+                let virtual_rect = display.info.rects.virtual_rect;
+
+                virtual_desktop_left = virtual_desktop_left.min(virtual_rect.left());
+                virtual_desktop_top = virtual_desktop_top.min(virtual_rect.top());
+                virtual_desktop_right = virtual_desktop_right.max(virtual_rect.right());
+                virtual_desktop_bottom = virtual_desktop_bottom.max(virtual_rect.bottom());
+            }
+
+            debug_assert!(virtual_desktop_right >= virtual_desktop_left);
+            debug_assert!(virtual_desktop_bottom >= virtual_desktop_top);
+            let virtual_desktop_width = (virtual_desktop_right - virtual_desktop_left) as u32;
+            let virtual_desktop_height = (virtual_desktop_bottom - virtual_desktop_top) as u32;
+
+            self.virtual_desktop.replace(Rectangle::new(Position::new(virtual_desktop_left, virtual_desktop_top),
+                Dimensions::new(virtual_desktop_width, virtual_desktop_height)));
+
+        } else {
+            self.virtual_desktop.take();
+        }
 
         Ok(num_displays)
     }
@@ -149,6 +179,13 @@ impl Displays {
     pub fn adjacency_info(&self, display_index: u32) -> Option<&AdjacencyInfo> {
         self.display_info_inner(display_index)
             .map(|display_info| &display_info.adjacency_info)
+    }
+
+    /// Returns the combined virtual desktop [`rectangle`] for all enumerated displays.
+    ///
+    /// [`rectangle`]: struct.Rectangle.html
+    pub fn virtual_desktop(&self) -> Option<Rectangle> {
+        self.virtual_desktop
     }
 
     fn display_info_inner(&self, display_index: u32) -> Option<&DisplayInfoInner> {
