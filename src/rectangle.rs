@@ -1,5 +1,7 @@
 #![allow(non_upper_case_globals)]
 
+use std::fmt::{Display, Formatter};
+
 /// 2D position of a point in display space.
 /// Left-to-right, top-to-bottom.
 /// Origin depends on context.
@@ -26,6 +28,12 @@ impl Position {
     }
 }
 
+impl Display for Position {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        write!(f, "[{}, {}]", self.left, self.top)
+    }
+}
+
 /// 2D dimensions of a rectangle in display space.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Dimensions {
@@ -49,6 +57,12 @@ impl Dimensions {
     }
 }
 
+impl Display for Dimensions {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        write!(f, "[{}, {}]", self.width, self.height)
+    }
+}
+
 /// 2D rectangle in display space.
 /// Left-to-right, top-to-bottom.
 /// Origin depends on context.
@@ -69,6 +83,12 @@ impl Default for Rectangle {
             position: Position::default(),
             dimensions: Dimensions::default(),
         }
+    }
+}
+
+impl Display for Rectangle {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        write!(f, "{}:{}", self.position, self.dimensions)
     }
 }
 
