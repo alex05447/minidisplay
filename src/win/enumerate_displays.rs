@@ -35,7 +35,7 @@ use winapi::{
         winuser::{
             EnumDisplayDevicesW, EnumDisplayMonitors, EnumDisplaySettingsW, GetMonitorInfoW,
             ENUM_CURRENT_SETTINGS, MONITORINFO, MONITORINFOEXW, MONITORINFOF_PRIMARY,
-            SetThreadDpiAwarenessContext,
+            SetThreadDpiAwarenessContext, USER_DEFAULT_SCREEN_DPI,
         },
         shellscalingapi::{GetDpiForMonitor, MDT_EFFECTIVE_DPI},
     },
@@ -397,9 +397,7 @@ extern "system" fn add_display_callback(
 
         assert_eq!(display_dpi_x, display_dpi_y, "Horizontal / vertical DPI scale value mismatch.");
 
-        const DEFAULT_WINDOWS_DPI: f32 = 96.0;
-
-        let dpi_scale = display_dpi_x as f32 / DEFAULT_WINDOWS_DPI;
+        let dpi_scale = display_dpi_x as f32 / USER_DEFAULT_SCREEN_DPI as f32;
 
         // Store the final display info to the context.
         let info = DisplayInfo::new(
