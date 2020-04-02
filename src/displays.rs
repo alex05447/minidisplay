@@ -1,3 +1,6 @@
+use std::iter::Iterator;
+use std::slice::Iter;
+
 use crate::{DisplayInfo, Rectangle, Dimensions, Position};
 
 #[cfg(windows)]
@@ -181,6 +184,11 @@ impl Displays {
             .map(|display_info| &display_info.adjacency_info)
     }
 
+    /// Returns an iterator over [`display info`](struct.DisplayInfo.html) of all enumerated displays.
+    pub fn iter(&self) -> DisplayInfoIter<'_> {
+        DisplayInfoIter(self.displays.iter())
+    }
+
     /// Returns the combined virtual desktop [`rectangle`] for all enumerated displays.
     ///
     /// [`rectangle`]: struct.Rectangle.html
@@ -237,5 +245,16 @@ impl Displays {
         }
 
         adjacency
+    }
+}
+
+/// Returns [`dispaly info`](struct.DisplayInfo.html) for consecutive enumerated displays.
+pub struct DisplayInfoIter<'d>(Iter<'d, DisplayInfoInner>);
+
+impl<'d> Iterator for DisplayInfoIter<'d> {
+    type Item = &'d DisplayInfo;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next().map(|info| &info.info)
     }
 }

@@ -10,9 +10,7 @@ fn main() {
     if num_displays > 0 {
         println!("Found {} display(s):", num_displays);
 
-        for i in 0..num_displays {
-            let display_info = displays.display_info(i).unwrap();
-
+        for (i, display_info) in displays.iter().enumerate() {
             assert!(
                 i != 0 || display_info.is_primary,
                 "Expected the display at index `0` to be primary."
@@ -45,7 +43,7 @@ fn main() {
                 display_info.dpi_scale * 100.0,
             );
 
-            let adjacency_info = displays.adjacency_info(i).unwrap();
+            let adjacency_info = displays.adjacency_info(i as u32).unwrap();
 
             if adjacency_info.is_some() {
                 if let Some(i) = adjacency_info.left {

@@ -24,7 +24,7 @@ pub use display_info::{
     closest_dimensions, ClosestDimensionsFlags, ConnectionType, DisplayInfo, DisplayMode,
     DisplayRects, UpscaleMode,
 };
-pub use displays::{AdjacencyInfo, Displays};
+pub use displays::{AdjacencyInfo, Displays, DisplayInfoIter};
 pub use rectangle::{ClipRectFlags, Dimensions, Position, Rectangle};
 
 #[cfg(windows)]
