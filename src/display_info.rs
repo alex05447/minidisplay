@@ -1,3 +1,5 @@
+#![allow(clippy::too_many_arguments)]
+
 use std::fmt::{Display, Formatter};
 
 use crate::{Dimensions, Rectangle};
@@ -92,6 +94,10 @@ pub struct DisplayInfo {
     pub display_modes: Vec<DisplayMode>,
     /// The dimensions of the smallest (by area) of the display's supported display modes.
     pub min_dimensions: Dimensions,
+    /// The display's DPI scale value.
+    /// `1.0` is the default and means no scaling.
+    /// Higher values like `1.25`, `1.5`, `2.0` mean higher zoom.
+    pub dpi_scale: f32,
 }
 
 impl DisplayInfo {
@@ -103,6 +109,7 @@ impl DisplayInfo {
         current_mode: DisplayMode,
         preferred_mode: DisplayMode,
         display_modes: Vec<DisplayMode>,
+        dpi_scale: f32,
     ) -> Self {
         let min_dimensions = DisplayInfo::calc_min_dimensions(&display_modes);
 
@@ -115,6 +122,7 @@ impl DisplayInfo {
             preferred_mode,
             display_modes,
             min_dimensions,
+            dpi_scale,
         }
     }
 

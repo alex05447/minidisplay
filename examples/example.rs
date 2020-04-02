@@ -19,7 +19,7 @@ fn main() {
             );
 
             println!(
-                "\t{}{} ({}) [({}, {}) - ({}, {})] (current: {}x{}@{:.1}Hz, preferred: {}x{}@{:.1}Hz)",
+                "\t{}{} ({}) [({}, {}) - ({}, {})] (current: {}x{}@{:.1}Hz, preferred: {}x{}@{:.1}Hz) (DPI scale: {}%))",
                 display_info
                     .name
                     .as_deref()
@@ -42,6 +42,7 @@ fn main() {
                 display_info.preferred_mode.dimensions.height,
                 display_info.preferred_mode.refresh_rate_num as f32
                     / display_info.preferred_mode.refresh_rate_denom as f32,
+                display_info.dpi_scale * 100.0,
             );
 
             let adjacency_info = displays.adjacency_info(i).unwrap();

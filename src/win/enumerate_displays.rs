@@ -10,8 +10,8 @@ use winapi::{
         basetsd::UINT32,
         minwindef::{BOOL, DWORD, LPARAM, WORD},
         ntdef::LONG,
-        windef::{HDC, HMONITOR, LPRECT},
-        winerror::ERROR_SUCCESS,
+        windef::{HDC, HMONITOR, LPRECT, DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE, DPI_AWARENESS_CONTEXT},
+        winerror::{ERROR_SUCCESS, S_OK},
     },
     um::{
         wingdi::{
@@ -35,7 +35,9 @@ use winapi::{
         winuser::{
             EnumDisplayDevicesW, EnumDisplayMonitors, EnumDisplaySettingsW, GetMonitorInfoW,
             ENUM_CURRENT_SETTINGS, MONITORINFO, MONITORINFOEXW, MONITORINFOF_PRIMARY,
+            SetThreadDpiAwarenessContext,
         },
+        shellscalingapi::{GetDpiForMonitor, MDT_EFFECTIVE_DPI},
     },
 };
 
@@ -375,6 +377,30 @@ extern "system" fn add_display_callback(
             }
         };
 
+        // Get the display's current DPI scale.
+        // Skip this display and continue enumeration on error.
+
+        let mut display_dpi_x = 0;
+        let mut display_dpi_y = 0;
+
+        if S_OK !=
+            unsafe {
+                GetDpiForMonitor(
+                    monitor,
+                    MDT_EFFECTIVE_DPI,
+                    &mut display_dpi_x,
+                    &mut display_dpi_y,
+                )
+            } {
+            return 1;
+        };
+
+        assert_eq!(display_dpi_x, display_dpi_y, "Horizontal / vertical DPI scale value mismatch.");
+
+        const DEFAULT_WINDOWS_DPI: f32 = 96.0;
+
+        let dpi_scale = display_dpi_x as f32 / DEFAULT_WINDOWS_DPI;
+
         // Store the final display info to the context.
         let info = DisplayInfo::new(
             name,
@@ -384,6 +410,7 @@ extern "system" fn add_display_callback(
             current_mode,
             preferred_mode,
             display_modes,
+            dpi_scale,
         );
 
         context.displays.push(EnumeratedDisplayInfo {
@@ -397,6 +424,24 @@ extern "system" fn add_display_callback(
     }
 
     1
+}
+
+/// Makes the enumerating thread DPI-aware to query the monitors' current DPI.
+/// Restores the thread's previous DPI awareness value when dropped.
+struct ThreadDPIAwarenessGuard(DPI_AWARENESS_CONTEXT);
+
+impl ThreadDPIAwarenessGuard {
+    fn new() -> Self {
+        Self(
+            unsafe { SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE) }
+        )
+    }
+}
+
+impl Drop for ThreadDPIAwarenessGuard {
+    fn drop(&mut self) {
+        unsafe { SetThreadDpiAwarenessContext(self.0) };
+    }
 }
 
 /// Enumerates the displays via WinAPI.
@@ -482,6 +527,9 @@ pub(crate) fn enumerate_displays_win() -> Result<Vec<EnumeratedDisplayInfo>, ()>
             .device_names
             .push(source_device_name.viewGdiDeviceName);
     }
+
+    // Make the thread DPI-aware to query the monitors' current DPI.
+    let _dpi_guard = ThreadDPIAwarenessGuard::new();
 
     if 0 == unsafe {
         EnumDisplayMonitors(

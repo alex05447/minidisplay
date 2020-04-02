@@ -10,4 +10,4 @@ edition = "2018"
 bitflags = "1.2.1"
 
 [target.'cfg(windows)'.dependencies]
-winapi = {version = "*", features = ["winuser", "winerror", "libloaderapi", "errhandlingapi"]}
+winapi = {version = "*", features = ["winuser", "winerror", "libloaderapi", "errhandlingapi", "shellscalingapi"]}
