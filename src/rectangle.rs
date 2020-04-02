@@ -295,19 +295,32 @@ mod tests {
         let rect_0 = Rectangle::new(Position::new(-1, -2), Dimensions::new(4, 3));
 
         assert!(rect_0.overlaps(&rect_0));
+        assert!(rect_0.clip(&rect_0, ClipRectFlags::KeepNone).is_some());
 
         let rect_1 = Rectangle::new(Position::new(1, -1), Dimensions::new(1, 4));
 
         assert!(rect_0.overlaps(&rect_1));
+        assert_eq!(rect_0.clip(&rect_1, ClipRectFlags::KeepNone), Some(Rectangle::new(Position::new(1, -1), Dimensions::new(1, 3))));
+        assert_eq!(rect_0.clip(&rect_1, ClipRectFlags::KeepAll), Some(Rectangle::new(Position::new(1, -1), Dimensions::new(1, 2))));
         assert!(rect_1.overlaps(&rect_0));
+        assert_eq!(rect_1.clip(&rect_0, ClipRectFlags::KeepNone), Some(Rectangle::new(Position::new(1, -2), Dimensions::new(1, 3))));
+        assert_eq!(rect_1.clip(&rect_0, ClipRectFlags::KeepAll), Some(Rectangle::new(Position::new(1, -1), Dimensions::new(1, 2))));
 
         let rect_2 = Rectangle::new(Position::new(-2, 0), Dimensions::new(1, 2));
 
         assert!(!rect_0.overlaps(&rect_2));
+        assert_eq!(rect_0.clip(&rect_2, ClipRectFlags::KeepNone), Some(Rectangle::new(Position::new(-2, 0), Dimensions::new(1, 2))));
+        assert!(rect_0.clip(&rect_2, ClipRectFlags::KeepAll).is_none());
         assert!(!rect_2.overlaps(&rect_0));
+        assert_eq!(rect_2.clip(&rect_0, ClipRectFlags::KeepNone), Some(Rectangle::new(Position::new(-1, -1), Dimensions::new(1, 2))));
+        assert!(rect_2.clip(&rect_0, ClipRectFlags::KeepAll).is_none());
 
         assert!(!rect_1.overlaps(&rect_2));
+        assert_eq!(rect_1.clip(&rect_2, ClipRectFlags::KeepNone), Some(Rectangle::new(Position::new(-2, 0), Dimensions::new(1, 2))));
+        assert!(rect_1.clip(&rect_2, ClipRectFlags::KeepAll).is_none());
         assert!(!rect_2.overlaps(&rect_1));
+        assert_eq!(rect_2.clip(&rect_1, ClipRectFlags::KeepNone), Some(Rectangle::new(Position::new(1, 0), Dimensions::new(1, 2))));
+        assert!(rect_2.clip(&rect_1, ClipRectFlags::KeepAll).is_none());
     }
 
     #[test]
@@ -551,6 +564,7 @@ mod tests {
         //            |                    .           |
         //
         let rect = Rectangle::new(Position::new(-3, -3), Dimensions::new(1, 1));
+        assert!(!rect.overlaps(&bounds));
         assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepAll), None);
 
         // Non-intersecting rectangle to the right and bottom.
@@ -565,6 +579,7 @@ mod tests {
         //         |                       .           |
         //
         let rect = Rectangle::new(Position::new(3, 3), Dimensions::new(1, 1));
+        assert!(!rect.overlaps(&bounds));
         assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepAll), None);
     }
 
