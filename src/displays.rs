@@ -1,7 +1,7 @@
 use std::iter::Iterator;
 use std::slice::Iter;
 
-use crate::{DisplayInfo, Rectangle, Dimensions, Position};
+use crate::{Dimensions, DisplayInfo, Position, Rectangle};
 
 #[cfg(windows)]
 use crate::DisplayInfoPlatform;
@@ -54,18 +54,18 @@ impl AdjacencyInfo {
 ///
 /// [`display manager`]: struct.Displays.html
 #[derive(Clone)]
-pub(crate) struct DisplayInfoInner {
+pub struct DisplayInfoFull {
     /// Generic display info.
-    pub(crate) info: DisplayInfo,
+    pub info: DisplayInfo,
     /// Platform-specific display info.
-    pub(crate) platform: DisplayInfoPlatform,
+    pub platform: DisplayInfoPlatform,
     /// Calculated display adjacency info.
-    pub(crate) adjacency_info: AdjacencyInfo,
+    pub adjacency_info: AdjacencyInfo,
 }
 
 /// Enumerates and holds the information about the system's displays.
 pub struct Displays {
-    displays: Vec<DisplayInfoInner>,
+    displays: Vec<DisplayInfoFull>,
     virtual_desktop: Option<Rectangle>,
 }
 
@@ -104,7 +104,7 @@ impl Displays {
         let mut displays = displays
             .into_iter()
             .zip(adjacency_info)
-            .map(|(info, adjacency_info)| DisplayInfoInner {
+            .map(|(info, adjacency_info)| DisplayInfoFull {
                 info: info.info,
                 platform: info.platform,
                 adjacency_info,
@@ -136,9 +136,10 @@ impl Displays {
             let virtual_desktop_width = (virtual_desktop_right - virtual_desktop_left) as u32;
             let virtual_desktop_height = (virtual_desktop_bottom - virtual_desktop_top) as u32;
 
-            self.virtual_desktop.replace(Rectangle::new(Position::new(virtual_desktop_left, virtual_desktop_top),
-                Dimensions::new(virtual_desktop_width, virtual_desktop_height)));
-
+            self.virtual_desktop.replace(Rectangle::new(
+                Position::new(virtual_desktop_left, virtual_desktop_top),
+                Dimensions::new(virtual_desktop_width, virtual_desktop_height),
+            ));
         } else {
             self.virtual_desktop.take();
         }
@@ -149,6 +150,16 @@ impl Displays {
     /// Returns the current number of enumerated displays.
     pub fn num_displays(&self) -> u32 {
         self.displays.len() as u32
+    }
+
+    /// Returns the [`full display info`] for the display with the provided `display_index`,
+    /// or `None` if `display_index` is out of bounds.
+    ///
+    /// NOTE - `display_index == 0` corresponds to the system's primary display, if any.
+    ///
+    /// [`full display info`]: struct.DisplayInfoFull.html
+    pub fn display_info_full(&self, display_index: u32) -> Option<&DisplayInfoFull> {
+        self.display_info_inner(display_index)
     }
 
     /// Returns the [`display info`] for the display with the provided `display_index`,
@@ -196,7 +207,7 @@ impl Displays {
         self.virtual_desktop
     }
 
-    fn display_info_inner(&self, display_index: u32) -> Option<&DisplayInfoInner> {
+    fn display_info_inner(&self, display_index: u32) -> Option<&DisplayInfoFull> {
         let display_index = display_index as usize;
 
         if display_index >= self.displays.len() {
@@ -249,7 +260,7 @@ impl Displays {
 }
 
 /// Returns [`dispaly info`](struct.DisplayInfo.html) for consecutive enumerated displays.
-pub struct DisplayInfoIter<'d>(Iter<'d, DisplayInfoInner>);
+pub struct DisplayInfoIter<'d>(Iter<'d, DisplayInfoFull>);
 
 impl<'d> Iterator for DisplayInfoIter<'d> {
     type Item = &'d DisplayInfo;

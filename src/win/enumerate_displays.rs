@@ -10,10 +10,13 @@ use winapi::{
         basetsd::UINT32,
         minwindef::{BOOL, DWORD, LPARAM, WORD},
         ntdef::LONG,
-        windef::{HDC, HMONITOR, LPRECT, DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE, DPI_AWARENESS_CONTEXT},
+        windef::{
+            DPI_AWARENESS_CONTEXT, DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE, HDC, HMONITOR, LPRECT,
+        },
         winerror::{ERROR_SUCCESS, S_OK},
     },
     um::{
+        shellscalingapi::{GetDpiForMonitor, MDT_EFFECTIVE_DPI},
         wingdi::{
             DEVMODEW, DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME,
             DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME,
@@ -34,10 +37,9 @@ use winapi::{
         winnt::WCHAR,
         winuser::{
             EnumDisplayDevicesW, EnumDisplayMonitors, EnumDisplaySettingsW, GetMonitorInfoW,
-            ENUM_CURRENT_SETTINGS, MONITORINFO, MONITORINFOEXW, MONITORINFOF_PRIMARY,
-            SetThreadDpiAwarenessContext, USER_DEFAULT_SCREEN_DPI,
+            SetThreadDpiAwarenessContext, ENUM_CURRENT_SETTINGS, MONITORINFO, MONITORINFOEXW,
+            MONITORINFOF_PRIMARY, USER_DEFAULT_SCREEN_DPI,
         },
-        shellscalingapi::{GetDpiForMonitor, MDT_EFFECTIVE_DPI},
     },
 };
 
@@ -383,19 +385,23 @@ extern "system" fn add_display_callback(
         let mut display_dpi_x = 0;
         let mut display_dpi_y = 0;
 
-        if S_OK !=
-            unsafe {
+        if S_OK
+            != unsafe {
                 GetDpiForMonitor(
                     monitor,
                     MDT_EFFECTIVE_DPI,
                     &mut display_dpi_x,
                     &mut display_dpi_y,
                 )
-            } {
+            }
+        {
             return 1;
         };
 
-        assert_eq!(display_dpi_x, display_dpi_y, "Horizontal / vertical DPI scale value mismatch.");
+        assert_eq!(
+            display_dpi_x, display_dpi_y,
+            "Horizontal / vertical DPI scale value mismatch."
+        );
 
         let dpi_scale = display_dpi_x as f32 / USER_DEFAULT_SCREEN_DPI as f32;
 
@@ -430,9 +436,7 @@ struct ThreadDPIAwarenessGuard(DPI_AWARENESS_CONTEXT);
 
 impl ThreadDPIAwarenessGuard {
     fn new() -> Self {
-        Self(
-            unsafe { SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE) }
-        )
+        Self(unsafe { SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE) })
     }
 }
 

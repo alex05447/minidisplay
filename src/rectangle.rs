@@ -216,7 +216,10 @@ impl Rectangle {
             return None;
         };
 
-        Some(Rectangle::new(Position::new(left, top), Dimensions::new(width, height)))
+        Some(Rectangle::new(
+            Position::new(left, top),
+            Dimensions::new(width, height),
+        ))
     }
 
     /// Clamps the rectangle's dimensions to the provided minimum.
@@ -227,8 +230,11 @@ impl Rectangle {
     /// as well as both of `KeepTop` and `KeepBottom`. If this is the case, the method returns `self`.
     pub fn clamp(&self, min_dimensions: Dimensions, clip_flags: ClipRectFlags) -> Rectangle {
         // If both of any of opposite side flags are set, we just ignore the request and return self.
-        if (clip_flags.contains(ClipRectFlags::KeepLeft) && clip_flags.contains(ClipRectFlags::KeepRight)) ||
-            (clip_flags.contains(ClipRectFlags::KeepTop) && clip_flags.contains(ClipRectFlags::KeepBottom)) {
+        if (clip_flags.contains(ClipRectFlags::KeepLeft)
+            && clip_flags.contains(ClipRectFlags::KeepRight))
+            || (clip_flags.contains(ClipRectFlags::KeepTop)
+                && clip_flags.contains(ClipRectFlags::KeepBottom))
+        {
             return *self;
         }
 
@@ -270,10 +276,7 @@ impl Rectangle {
 
         Rectangle {
             position: Position::new(left, top),
-            dimensions: Dimensions::new(
-                width,
-                height,
-            )
+            dimensions: Dimensions::new(width, height),
         }
     }
 }
@@ -300,26 +303,50 @@ mod tests {
         let rect_1 = Rectangle::new(Position::new(1, -1), Dimensions::new(1, 4));
 
         assert!(rect_0.overlaps(&rect_1));
-        assert_eq!(rect_0.clip(&rect_1, ClipRectFlags::KeepNone), Some(Rectangle::new(Position::new(1, -1), Dimensions::new(1, 3))));
-        assert_eq!(rect_0.clip(&rect_1, ClipRectFlags::KeepAll), Some(Rectangle::new(Position::new(1, -1), Dimensions::new(1, 2))));
+        assert_eq!(
+            rect_0.clip(&rect_1, ClipRectFlags::KeepNone),
+            Some(Rectangle::new(Position::new(1, -1), Dimensions::new(1, 3)))
+        );
+        assert_eq!(
+            rect_0.clip(&rect_1, ClipRectFlags::KeepAll),
+            Some(Rectangle::new(Position::new(1, -1), Dimensions::new(1, 2)))
+        );
         assert!(rect_1.overlaps(&rect_0));
-        assert_eq!(rect_1.clip(&rect_0, ClipRectFlags::KeepNone), Some(Rectangle::new(Position::new(1, -2), Dimensions::new(1, 3))));
-        assert_eq!(rect_1.clip(&rect_0, ClipRectFlags::KeepAll), Some(Rectangle::new(Position::new(1, -1), Dimensions::new(1, 2))));
+        assert_eq!(
+            rect_1.clip(&rect_0, ClipRectFlags::KeepNone),
+            Some(Rectangle::new(Position::new(1, -2), Dimensions::new(1, 3)))
+        );
+        assert_eq!(
+            rect_1.clip(&rect_0, ClipRectFlags::KeepAll),
+            Some(Rectangle::new(Position::new(1, -1), Dimensions::new(1, 2)))
+        );
 
         let rect_2 = Rectangle::new(Position::new(-2, 0), Dimensions::new(1, 2));
 
         assert!(!rect_0.overlaps(&rect_2));
-        assert_eq!(rect_0.clip(&rect_2, ClipRectFlags::KeepNone), Some(Rectangle::new(Position::new(-2, 0), Dimensions::new(1, 2))));
+        assert_eq!(
+            rect_0.clip(&rect_2, ClipRectFlags::KeepNone),
+            Some(Rectangle::new(Position::new(-2, 0), Dimensions::new(1, 2)))
+        );
         assert!(rect_0.clip(&rect_2, ClipRectFlags::KeepAll).is_none());
         assert!(!rect_2.overlaps(&rect_0));
-        assert_eq!(rect_2.clip(&rect_0, ClipRectFlags::KeepNone), Some(Rectangle::new(Position::new(-1, -1), Dimensions::new(1, 2))));
+        assert_eq!(
+            rect_2.clip(&rect_0, ClipRectFlags::KeepNone),
+            Some(Rectangle::new(Position::new(-1, -1), Dimensions::new(1, 2)))
+        );
         assert!(rect_2.clip(&rect_0, ClipRectFlags::KeepAll).is_none());
 
         assert!(!rect_1.overlaps(&rect_2));
-        assert_eq!(rect_1.clip(&rect_2, ClipRectFlags::KeepNone), Some(Rectangle::new(Position::new(-2, 0), Dimensions::new(1, 2))));
+        assert_eq!(
+            rect_1.clip(&rect_2, ClipRectFlags::KeepNone),
+            Some(Rectangle::new(Position::new(-2, 0), Dimensions::new(1, 2)))
+        );
         assert!(rect_1.clip(&rect_2, ClipRectFlags::KeepAll).is_none());
         assert!(!rect_2.overlaps(&rect_1));
-        assert_eq!(rect_2.clip(&rect_1, ClipRectFlags::KeepNone), Some(Rectangle::new(Position::new(1, 0), Dimensions::new(1, 2))));
+        assert_eq!(
+            rect_2.clip(&rect_1, ClipRectFlags::KeepNone),
+            Some(Rectangle::new(Position::new(1, 0), Dimensions::new(1, 2)))
+        );
         assert!(rect_2.clip(&rect_1, ClipRectFlags::KeepAll).is_none());
     }
 
@@ -378,7 +405,10 @@ mod tests {
         //         |                    .           |
         //
         let rect = Rectangle::new(Position::new(-2, -1), Dimensions::new(4, 2));
-        assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepRight), Some(Rectangle::new(Position::new(-1, -1), Dimensions::new(3, 2))));
+        assert_eq!(
+            rect.clip(&bounds, ClipRectFlags::KeepRight),
+            Some(Rectangle::new(Position::new(-1, -1), Dimensions::new(3, 2)))
+        );
         // Resizing on the left -> clipped on the left, moved to the bottom.
         //
         //    _____|_____               .           |
@@ -391,7 +421,10 @@ mod tests {
         //         |                    .           |
         //
         let rect = Rectangle::new(Position::new(-2, -3), Dimensions::new(4, 2));
-        assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepRight), Some(Rectangle::new(Position::new(-1, -2), Dimensions::new(3, 2))));
+        assert_eq!(
+            rect.clip(&bounds, ClipRectFlags::KeepRight),
+            Some(Rectangle::new(Position::new(-1, -2), Dimensions::new(3, 2)))
+        );
 
         // Resizing on the right -> clipped on the right.
         //
@@ -405,7 +438,10 @@ mod tests {
         //         |                    .           |
         //
         let rect = Rectangle::new(Position::new(1, -1), Dimensions::new(3, 2));
-        assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepLeft), Some(Rectangle::new(Position::new(1, -1), Dimensions::new(2, 2))));
+        assert_eq!(
+            rect.clip(&bounds, ClipRectFlags::KeepLeft),
+            Some(Rectangle::new(Position::new(1, -1), Dimensions::new(2, 2)))
+        );
         // Resizing on the right -> clipped on the right, moved to the bottom.
         //
         //         |   ________         .           |
@@ -418,7 +454,10 @@ mod tests {
         //         |                    .           |
         //
         let rect = Rectangle::new(Position::new(1, -3), Dimensions::new(3, 2));
-        assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepLeft), Some(Rectangle::new(Position::new(1, -2), Dimensions::new(2, 2))));
+        assert_eq!(
+            rect.clip(&bounds, ClipRectFlags::KeepLeft),
+            Some(Rectangle::new(Position::new(1, -2), Dimensions::new(2, 2)))
+        );
 
         // Resizing on the top -> clipped on the top.
         //
@@ -432,7 +471,10 @@ mod tests {
         //         |                    .           |
         //
         let rect = Rectangle::new(Position::new(-1, -3), Dimensions::new(2, 3));
-        assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepBottom), Some(Rectangle::new(Position::new(-1, -2), Dimensions::new(2, 2))));
+        assert_eq!(
+            rect.clip(&bounds, ClipRectFlags::KeepBottom),
+            Some(Rectangle::new(Position::new(-1, -2), Dimensions::new(2, 2)))
+        );
         // Resizing on the top -> clipped on the top, moved to the right.
         //
         //    __ __|                    .           |
@@ -445,7 +487,10 @@ mod tests {
         //         |                    .           |
         //
         let rect = Rectangle::new(Position::new(-2, -3), Dimensions::new(2, 3));
-        assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepBottom), Some(Rectangle::new(Position::new(-1, -2), Dimensions::new(2, 2))));
+        assert_eq!(
+            rect.clip(&bounds, ClipRectFlags::KeepBottom),
+            Some(Rectangle::new(Position::new(-1, -2), Dimensions::new(2, 2)))
+        );
 
         // Resizing on the bottom -> clipped on the bottom.
         //
@@ -460,7 +505,10 @@ mod tests {
         //         |                    .           |
         //
         let rect = Rectangle::new(Position::new(0, 2), Dimensions::new(2, 3));
-        assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepTop), Some(Rectangle::new(Position::new(0, 2), Dimensions::new(2, 1))));
+        assert_eq!(
+            rect.clip(&bounds, ClipRectFlags::KeepTop),
+            Some(Rectangle::new(Position::new(0, 2), Dimensions::new(2, 1)))
+        );
         // Resizing on the bottom -> clipped on the bottom, moved to the left.
         //
         //       __|________            .         __|________
@@ -474,7 +522,10 @@ mod tests {
         //         |                    .           |
         //
         let rect = Rectangle::new(Position::new(2, 2), Dimensions::new(2, 3));
-        assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepTop), Some(Rectangle::new(Position::new(1, 2), Dimensions::new(2, 1))));
+        assert_eq!(
+            rect.clip(&bounds, ClipRectFlags::KeepTop),
+            Some(Rectangle::new(Position::new(1, 2), Dimensions::new(2, 1)))
+        );
 
         // Resizing on the left and top -> clipped on the left and top.
         //
@@ -488,7 +539,13 @@ mod tests {
         //         |                    .           |
         //
         let rect = Rectangle::new(Position::new(-2, -3), Dimensions::new(2, 2));
-        assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepRight | ClipRectFlags::KeepBottom), Some(Rectangle::new(Position::new(-1, -2), Dimensions::new(1, 1))));
+        assert_eq!(
+            rect.clip(
+                &bounds,
+                ClipRectFlags::KeepRight | ClipRectFlags::KeepBottom
+            ),
+            Some(Rectangle::new(Position::new(-1, -2), Dimensions::new(1, 1)))
+        );
 
         // Resizing on the left and bottom -> clipped on the left and bottom.
         //
@@ -502,7 +559,10 @@ mod tests {
         //         |                    .           |
         //
         let rect = Rectangle::new(Position::new(-2, 1), Dimensions::new(2, 3));
-        assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepRight | ClipRectFlags::KeepTop), Some(Rectangle::new(Position::new(-1, 1), Dimensions::new(1, 2))));
+        assert_eq!(
+            rect.clip(&bounds, ClipRectFlags::KeepRight | ClipRectFlags::KeepTop),
+            Some(Rectangle::new(Position::new(-1, 1), Dimensions::new(1, 2)))
+        );
 
         // Resizing on the right and top -> clipped on the right and top.
         //
@@ -516,7 +576,10 @@ mod tests {
         //         |                    .           |
         //
         let rect = Rectangle::new(Position::new(2, -3), Dimensions::new(2, 3));
-        assert_eq!(rect.clip(&bounds, ClipRectFlags::KeepLeft | ClipRectFlags::KeepBottom), Some(Rectangle::new(Position::new(2, -2), Dimensions::new(1, 2))));
+        assert_eq!(
+            rect.clip(&bounds, ClipRectFlags::KeepLeft | ClipRectFlags::KeepBottom),
+            Some(Rectangle::new(Position::new(2, -2), Dimensions::new(1, 2)))
+        );
 
         // Clip the rectangle to the right and bottom.
         //
@@ -589,42 +652,90 @@ mod tests {
 
         // No-op.
         let rect = Rectangle::new(Position::new(-1, -2), Dimensions::new(2, 3));
-        assert_eq!(rect.clamp(min_dimensions, ClipRectFlags::KeepLeft | ClipRectFlags::KeepRight), rect);
+        assert_eq!(
+            rect.clamp(
+                min_dimensions,
+                ClipRectFlags::KeepLeft | ClipRectFlags::KeepRight
+            ),
+            rect
+        );
 
         // No-op.
         let rect = Rectangle::new(Position::new(-3, 0), Dimensions::new(4, 1));
-        assert_eq!(rect.clamp(min_dimensions, ClipRectFlags::KeepTop | ClipRectFlags::KeepBottom), rect);
+        assert_eq!(
+            rect.clamp(
+                min_dimensions,
+                ClipRectFlags::KeepTop | ClipRectFlags::KeepBottom
+            ),
+            rect
+        );
 
         // Resizing on the left.
         let rect = Rectangle::new(Position::new(-1, -2), Dimensions::new(2, 3));
-        assert_eq!(rect.clamp(min_dimensions, ClipRectFlags::KeepRight), Rectangle::new(Position::new(-2, -2), Dimensions::new(3, 3)));
+        assert_eq!(
+            rect.clamp(min_dimensions, ClipRectFlags::KeepRight),
+            Rectangle::new(Position::new(-2, -2), Dimensions::new(3, 3))
+        );
 
         // Resizing on the right.
         let rect = Rectangle::new(Position::new(-3, -2), Dimensions::new(2, 3));
-        assert_eq!(rect.clamp(min_dimensions, ClipRectFlags::KeepLeft), Rectangle::new(Position::new(-3, -2), Dimensions::new(3, 3)));
+        assert_eq!(
+            rect.clamp(min_dimensions, ClipRectFlags::KeepLeft),
+            Rectangle::new(Position::new(-3, -2), Dimensions::new(3, 3))
+        );
 
         // Resizing on the top.
         let rect = Rectangle::new(Position::new(-3, 0), Dimensions::new(4, 1));
-        assert_eq!(rect.clamp(min_dimensions, ClipRectFlags::KeepBottom), Rectangle::new(Position::new(-3, -1), Dimensions::new(4, 2)));
+        assert_eq!(
+            rect.clamp(min_dimensions, ClipRectFlags::KeepBottom),
+            Rectangle::new(Position::new(-3, -1), Dimensions::new(4, 2))
+        );
 
         // Resizing on the bottom.
         let rect = Rectangle::new(Position::new(-3, -2), Dimensions::new(4, 1));
-        assert_eq!(rect.clamp(min_dimensions, ClipRectFlags::KeepTop), Rectangle::new(Position::new(-3, -2), Dimensions::new(4, 2)));
+        assert_eq!(
+            rect.clamp(min_dimensions, ClipRectFlags::KeepTop),
+            Rectangle::new(Position::new(-3, -2), Dimensions::new(4, 2))
+        );
 
         // Resizing on the left and top.
         let rect = Rectangle::new(Position::new(0, 0), Dimensions::new(1, 1));
-        assert_eq!(rect.clamp(min_dimensions, ClipRectFlags::KeepRight | ClipRectFlags::KeepBottom), Rectangle::new(Position::new(-2, -1), Dimensions::new(3, 2)));
+        assert_eq!(
+            rect.clamp(
+                min_dimensions,
+                ClipRectFlags::KeepRight | ClipRectFlags::KeepBottom
+            ),
+            Rectangle::new(Position::new(-2, -1), Dimensions::new(3, 2))
+        );
 
         // Resizing on the left and bottom.
         let rect = Rectangle::new(Position::new(0, -2), Dimensions::new(1, 1));
-        assert_eq!(rect.clamp(min_dimensions, ClipRectFlags::KeepRight | ClipRectFlags::KeepTop), Rectangle::new(Position::new(-2, -2), Dimensions::new(3, 2)));
+        assert_eq!(
+            rect.clamp(
+                min_dimensions,
+                ClipRectFlags::KeepRight | ClipRectFlags::KeepTop
+            ),
+            Rectangle::new(Position::new(-2, -2), Dimensions::new(3, 2))
+        );
 
         // Resizing on the right and bottom.
         let rect = Rectangle::new(Position::new(-3, -2), Dimensions::new(1, 1));
-        assert_eq!(rect.clamp(min_dimensions, ClipRectFlags::KeepLeft | ClipRectFlags::KeepTop), Rectangle::new(Position::new(-3, -2), Dimensions::new(3, 2)));
+        assert_eq!(
+            rect.clamp(
+                min_dimensions,
+                ClipRectFlags::KeepLeft | ClipRectFlags::KeepTop
+            ),
+            Rectangle::new(Position::new(-3, -2), Dimensions::new(3, 2))
+        );
 
         // Resizing on the right and top.
         let rect = Rectangle::new(Position::new(-3, 0), Dimensions::new(1, 1));
-        assert_eq!(rect.clamp(min_dimensions, ClipRectFlags::KeepLeft | ClipRectFlags::KeepBottom), Rectangle::new(Position::new(-3, -1), Dimensions::new(3, 2)));
+        assert_eq!(
+            rect.clamp(
+                min_dimensions,
+                ClipRectFlags::KeepLeft | ClipRectFlags::KeepBottom
+            ),
+            Rectangle::new(Position::new(-3, -1), Dimensions::new(3, 2))
+        );
     }
 }
