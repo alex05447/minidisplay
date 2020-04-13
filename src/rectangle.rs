@@ -1,6 +1,7 @@
 #![allow(non_upper_case_globals)]
 
 use std::fmt::{Display, Formatter};
+use std::ops::{Add, Sub};
 
 /// 2D position of a point in display space.
 /// Left-to-right, top-to-bottom.
@@ -19,6 +20,28 @@ pub struct Position {
 impl Default for Position {
     fn default() -> Self {
         Self { left: 0, top: 0 }
+    }
+}
+
+impl Add for Position {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self::Output {
+        Self {
+            left: self.left + other.left,
+            top: self.top + other.top,
+        }
+    }
+}
+
+impl Sub for Position {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self::Output {
+        Self {
+            left: self.left - other.left,
+            top: self.top - other.top,
+        }
     }
 }
 
@@ -44,6 +67,32 @@ pub struct Dimensions {
 impl Default for Dimensions {
     fn default() -> Self {
         Self::new(0, 0)
+    }
+}
+
+impl Add for Dimensions {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self::Output {
+        Self {
+            width: self.width + other.width,
+            height: self.height + other.height,
+        }
+    }
+}
+
+impl Sub for Dimensions {
+    type Output = Option<Self>;
+
+    fn sub(self, other: Self) -> Self::Output {
+        if (self.width >= other.width) && (self.height >= other.height) {
+            Some(Self {
+                width: self.width - other.width,
+                height: self.height - other.height,
+            })
+        } else {
+            None
+        }
     }
 }
 
@@ -280,6 +329,33 @@ fn at_most<T: std::cmp::Ord>(val: T, max: T) -> T {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn position_add_sub() {
+        let position_0 = Position::new(-1, 2);
+        let position_1 = Position::new(7, -14);
+
+        assert_eq!(position_0 + position_1, Position::new(6, -12));
+        assert_eq!(position_0 - position_1, Position::new(-8, 16));
+    }
+
+    #[test]
+    fn dimensions_add_sub() {
+        let dimensions_0 = Dimensions::new(2, 4);
+        let dimensions_1 = Dimensions::new(3, 3);
+        let dimensions_2 = Dimensions::new(1, 5);
+        let dimensions_3 = Dimensions::new(1, 3);
+
+        assert_eq!(dimensions_0 + dimensions_1, Dimensions::new(5, 7));
+        assert_eq!(dimensions_0 - dimensions_1, None);
+        assert_eq!(dimensions_1 - dimensions_0, None);
+        assert_eq!(dimensions_0 + dimensions_2, Dimensions::new(3, 9));
+        assert_eq!(dimensions_0 - dimensions_2, None);
+        assert_eq!(dimensions_2 - dimensions_0, None);
+        assert_eq!(dimensions_0 + dimensions_3, Dimensions::new(3, 7));
+        assert_eq!(dimensions_0 - dimensions_3, Some(Dimensions::new(1, 1)));
+        assert_eq!(dimensions_3 - dimensions_0, None);
+    }
 
     #[test]
     fn overlaps() {
