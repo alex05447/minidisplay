@@ -225,19 +225,7 @@ impl Rectangle {
     /// Clamps the rectangle's dimensions to the provided minimum.
     /// `clip_flags` control which sides of the rectangle to keep in place.
     /// Returns the clamped rectangle.
-    ///
-    /// NOTE: `clip_flags` must not contain both of `KeepLeft` and `KeepRight`;
-    /// as well as both of `KeepTop` and `KeepBottom`. If this is the case, the method returns `self`.
     pub fn clamp(&self, min_dimensions: Dimensions, clip_flags: ClipRectFlags) -> Rectangle {
-        // If both of any of opposite side flags are set, we just ignore the request and return self.
-        if (clip_flags.contains(ClipRectFlags::KeepLeft)
-            && clip_flags.contains(ClipRectFlags::KeepRight))
-            || (clip_flags.contains(ClipRectFlags::KeepTop)
-                && clip_flags.contains(ClipRectFlags::KeepBottom))
-        {
-            return *self;
-        }
-
         let left = self.left();
         let top = self.top();
 
@@ -649,26 +637,6 @@ mod tests {
     #[test]
     fn clamp() {
         let min_dimensions = Dimensions::new(3, 2);
-
-        // No-op.
-        let rect = Rectangle::new(Position::new(-1, -2), Dimensions::new(2, 3));
-        assert_eq!(
-            rect.clamp(
-                min_dimensions,
-                ClipRectFlags::KeepLeft | ClipRectFlags::KeepRight
-            ),
-            rect
-        );
-
-        // No-op.
-        let rect = Rectangle::new(Position::new(-3, 0), Dimensions::new(4, 1));
-        assert_eq!(
-            rect.clamp(
-                min_dimensions,
-                ClipRectFlags::KeepTop | ClipRectFlags::KeepBottom
-            ),
-            rect
-        );
 
         // Resizing on the left.
         let rect = Rectangle::new(Position::new(-1, -2), Dimensions::new(2, 3));
