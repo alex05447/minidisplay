@@ -10,7 +10,7 @@ fn main() {
     if num_displays > 0 {
         println!("Found {} display(s):", num_displays);
 
-        for (i, display_info) in displays.iter().enumerate() {
+        for (i, display_info) in displays.iter().map(|info| &info.info).enumerate() {
             assert!(
                 i != 0 || display_info.is_primary,
                 "Expected the display at index `0` to be primary."

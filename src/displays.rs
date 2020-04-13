@@ -195,7 +195,7 @@ impl Displays {
             .map(|display_info| &display_info.adjacency_info)
     }
 
-    /// Returns an iterator over [`display info`](struct.DisplayInfo.html) of all enumerated displays.
+    /// Returns an iterator over [`full display info`](struct.DisplayInfoFull.html) of all enumerated displays.
     pub fn iter(&self) -> DisplayInfoIter<'_> {
         DisplayInfoIter(self.displays.iter())
     }
@@ -259,13 +259,13 @@ impl Displays {
     }
 }
 
-/// Returns [`dispaly info`](struct.DisplayInfo.html) for consecutive enumerated displays.
+/// Returns [`full dispaly info`](struct.DisplayInfoFull.html) for consecutive enumerated displays.
 pub struct DisplayInfoIter<'d>(Iter<'d, DisplayInfoFull>);
 
 impl<'d> Iterator for DisplayInfoIter<'d> {
-    type Item = &'d DisplayInfo;
+    type Item = &'d DisplayInfoFull;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.0.next().map(|info| &info.info)
+        self.0.next()
     }
 }
